@@ -11,11 +11,12 @@ export const skillGroups: SkillGroup[] = [
       "React Three Fiber",
       "Tailwind CSS",
       "Framer Motion",
+      "bootstrap",
     ],
   },
   {
     label: "BACKEND",
-    items: ["Node.js", "Express", "PostgreSQL", "MongoDB", "REST APIs"],
+    items: ["Node.js", "Express", "PostgreSQL", "MongoDB", "REST APIs",],
   },
   {
     label: "TOOLS",
