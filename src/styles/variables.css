@@ -1,0 +1,56 @@
+
+:root {
+  /* Background palette */
+  --color-bg: #0b0d12;
+  --color-bg-soft: #11151d;
+  --color-surface: #171c26;
+  --color-surface-hover: #202838;
+
+  /* Brand palette */
+  --color-primary: #8b7cff;
+  --color-primary-light: #b5aaff;
+  --color-accent: #59e1d2;
+  --color-highlight: #ffc875;
+
+  /* Text palette */
+  --color-text: #f5f7ff;
+  --color-text-secondary: #a5aec0;
+  --color-text-muted: #707b90;
+
+  /* Borders and effects */
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-active: rgba(139, 124, 255, 0.6);
+  --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.28);
+  --shadow-glow: 0 0 35px rgba(139, 124, 255, 0.18);
+
+  /* Typography */
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-mono: "Consolas", "Courier New", monospace;
+
+  /* Layout */
+  --container-width: 1440px;
+  --navbar-height: 76px;
+  --page-padding: clamp(20px, 5vw, 80px);
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Animation */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 180ms;
+  --duration-normal: 320ms;
+  --duration-slow: 600ms;
+}
+
+/* Accessible system preference */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+  }
+}
