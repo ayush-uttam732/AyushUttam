@@ -5,9 +5,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
 
-  // Required for GitHub Pages repository:
-  // https://ayush-uttam732.github.io/PORTFOLIO/
-  base: "/PORTFOLIO/",
+  // Vercel production deployment
+  base: "/",
 
   build: {
     outDir: "dist",
