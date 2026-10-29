@@ -18,7 +18,9 @@ import { Experience } from "../features/experience/Experience";
 import { ProjectsLaptopPanel } from "../features/panels/ProjectsLaptopPanel";
 import { SkillsPanel } from "../features/panels/SkillsPanel";
 import { AboutBook } from "../features/panels/about-book/AboutBook";
-import { ContactPanel } from "../features/panels/ContactPanel";
+import { GamesArcade } from "../features/games/arcade/GamesArcade";
+import { ContactPhone } from "../features/panels/phone/ContactPhone";
+
 import { GameHUD } from "../components/layout/GameHUD";
 import { AchievementSystem } from "../features/achievements/AchievementSystem";
 import { useGameState } from "../hooks/useGameState";
@@ -26,42 +28,6 @@ import type { PanelName } from "../types";
 import { SOCIAL } from "../utils/constants";
 
 import "./App.css";
-
-const panels: Record<
-  PanelName,
-  { eyebrow: string; title: string; description: string }
-> = {
-  projects: {
-    eyebrow: "SELECTED WORK · 01",
-    title: "Things I've built.",
-    description:
-      "A collection of digital experiences, experiments, and products I've worked on.",
-  },
-  about: {
-    eyebrow: "BEHIND THE SCREEN",
-    title: "Hey, I'm Ayush.",
-    description:
-      "A creative developer who enjoys building interactive experiences where design meets technology.",
-  },
-  skills: {
-    eyebrow: "MY TOOLKIT",
-    title: "Tools of the trade.",
-    description:
-      "Technologies and tools I use to bring digital ideas to life.",
-  },
-  contact: {
-    eyebrow: "LET'S CONNECT",
-    title: "Have an idea?",
-    description:
-      "Have a project, collaboration, or an interesting experiment in mind? Let's talk.",
-  },
-  play: {
-    eyebrow: "EXPLORATION MODE",
-    title: "Look around.",
-    description:
-      "Explore the room and select the glowing markers to discover different parts of my portfolio.",
-  },
-};
 
 const navigationItems: {
   id: PanelName;
@@ -291,78 +257,19 @@ function App() {
         <span>SCROLL TO ZOOM</span>
       </div>
 
-      {/* STANDARD CONTENT PANEL
-          About, Skills aur Projects yahan render nahi honge.
-          Isse AboutBook ke andar double popup nahi banega. */}
-      {activePanel &&
-        activePanel !== "about" &&
-        activePanel !== "skills" &&
-        activePanel !== "projects" && (
-          <div className="panel-backdrop" onClick={closePanel}>
-            <section
-              className="world-panel"
-              onClick={(event) => event.stopPropagation()}
-              aria-labelledby="panel-title"
-              role="dialog"
-              aria-modal="true"
-            >
-              <button
-                className="panel-close"
-                onClick={closePanel}
-                aria-label="Close panel"
-              >
-                <X size={19} />
-              </button>
-
-              <div className="panel-eyebrow">
-                <span className="status-dot" />
-                {panels[activePanel].eyebrow}
-              </div>
-
-              <h2 id="panel-title">
-                {panels[activePanel].title}
-              </h2>
-
-              <p className="panel-description">
-                {panels[activePanel].description}
-              </p>
-
-              {activePanel === "contact" && <ContactPanel />}
-
-              {activePanel === "play" && (
-                <div className="play-tip">
-                  <span>01</span> Drag to explore the room.
-                  <br />
-                  <span>02</span> Scroll to zoom in and out.
-                  <br />
-                  <span>03</span> Select a glowing marker to discover more.
-                </div>
-              )}
-
-              {activePanel === "play" && (
-                <button
-                  className="explore-button"
-                  style={{ marginTop: 24 }}
-                  onClick={startGame}
-                >
-                  <span>START THE HUNT</span>
-                  <ArrowDownRight size={17} />
-                </button>
-              )}
-
-              <div className="panel-footer">
-                <span>AYUSH UTTAM</span>
-                <span>END OF TRANSMISSION_</span>
-              </div>
-            </section>
-          </div>
-        )}
-
       {/* ABOUT STORYBOOK
           Alag render hoga, purane world-panel ke andar nahi. */}
       {activePanel === "about" && (
         <AboutBook onClose={closePanel} />
       )}
+
+      {activePanel === "contact" && <ContactPhone onClose={closePanel} />}
+
+      {/* GAMES ARCADE */}
+      {activePanel === "play" && (
+        <GamesArcade onClose={closePanel} onStartHunt={startGame} />
+      )}
+
 
       {/* SKILLS */}
       {activePanel === "skills" && (

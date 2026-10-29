@@ -1,0 +1,372 @@
+/* =========================================================
+   GAMES ARCADE
+========================================================= */
+.arcade {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  color: #e9f4f5;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(40, 30, 96, 0.55), transparent 62%),
+    rgba(5, 7, 16, 0.9);
+  backdrop-filter: blur(8px);
+  animation: arcade-in 500ms ease both;
+}
+
+.arcade-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.arcade-stage canvas {
+  display: block;
+  touch-action: none;
+}
+
+.arcade-close {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  background: rgba(8, 15, 19, 0.72);
+  color: #effff8;
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.arcade-close:hover {
+  transform: rotate(90deg);
+}
+
+/* ---------- menu ---------- */
+
+.arcade-menu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.arcade-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #59e1d2;
+}
+
+.arcade-menu h2 {
+  margin: 14px 0 6px;
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.arcade-menu > p {
+  margin: 0 0 34px;
+  color: rgba(233, 244, 245, 0.6);
+  font-size: 13px;
+}
+
+.arcade-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 270px));
+  gap: 22px;
+  perspective: 1100px;
+}
+
+.arcade-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 24px 22px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+    rgba(10, 13, 26, 0.86);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 10%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 160ms ease-out, box-shadow 250ms ease, border-color 250ms ease;
+  animation: arcade-card-in 600ms cubic-bezier(0.2, 0.85, 0.2, 1) both;
+  animation-delay: calc(150ms + var(--i) * 110ms);
+}
+
+.arcade-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.arcade-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 6px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  transform: translateZ(40px);
+}
+
+.arcade-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.6px;
+  color: var(--accent);
+}
+
+.arcade-card strong {
+  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.arcade-text {
+  min-height: 62px;
+  color: rgba(233, 244, 245, 0.62);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.arcade-best {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #ffd34d;
+}
+
+.arcade-play {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2.4px;
+  color: var(--accent);
+}
+
+.arcade-hunt {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 30px;
+  padding: 12px 22px;
+  border: 1px dashed rgba(89, 225, 210, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: #59e1d2;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.arcade-hunt:hover {
+  background: rgba(89, 225, 210, 0.1);
+}
+
+/* ---------- in game ---------- */
+
+.arcade-hud {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 10px 28px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(89, 225, 210, 0.3);
+  border-radius: 999px;
+  background: rgba(8, 11, 22, 0.75);
+  pointer-events: none;
+  text-align: center;
+}
+
+.arcade-hud small {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: rgba(233, 244, 245, 0.5);
+}
+
+.arcade-hud b {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.arcade-info {
+  min-width: 90px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffb86e;
+}
+
+.arcade-how {
+  position: absolute;
+  bottom: 74px;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 2.4px;
+  color: rgba(233, 244, 245, 0.55);
+  pointer-events: none;
+  text-align: center;
+}
+
+.arcade-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  transform: translateX(-50%);
+}
+
+.arcade-bar button,
+.arcade-over button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid rgba(89, 225, 210, 0.45);
+  border-radius: 999px;
+  background: rgba(8, 11, 22, 0.82);
+  color: #e9f4f5;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.arcade-bar button:hover,
+.arcade-over button:hover {
+  border-color: #59e1d2;
+  box-shadow: 0 0 22px rgba(89, 225, 210, 0.35);
+}
+
+.arcade-over {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 14, 0.55);
+  animation: arcade-in 300ms ease both;
+}
+
+.arcade-over-card {
+  padding: 30px 44px 28px;
+  border: 1px solid rgba(89, 225, 210, 0.45);
+  border-radius: 22px;
+  background: rgba(9, 12, 24, 0.94);
+  box-shadow: 0 0 60px rgba(89, 225, 210, 0.18);
+  text-align: center;
+  animation: arcade-card-in 500ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.arcade-over-card small {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: #ffb86e;
+}
+
+.arcade-over-card b {
+  display: block;
+  margin: 6px 0 2px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 72px;
+  line-height: 1;
+}
+
+.arcade-over-card p {
+  margin: 0 0 22px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: rgba(233, 244, 245, 0.55);
+}
+
+.arcade-over-card div {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.arcade-over button.primary {
+  border-color: #59e1d2;
+  background: #59e1d2;
+  color: #06201c;
+}
+
+@keyframes arcade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes arcade-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+}
+
+@media (max-width: 900px) {
+  .arcade-cards {
+    grid-template-columns: minmax(0, 340px);
+    gap: 14px;
+  }
+
+  .arcade-text {
+    min-height: 0;
+  }
+
+  .arcade-menu {
+    justify-content: flex-start;
+    padding-top: 80px;
+  }
+
+  .arcade-hud {
+    gap: 18px;
+    padding: 8px 18px;
+  }
+
+  .arcade-close {
+    top: 14px;
+    right: 14px;
+  }
+}

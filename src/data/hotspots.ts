@@ -16,7 +16,7 @@ export const hotspots: HotspotDef[] = [
   { id: "projects", label: "PROJECTS", x: 0.502, y: 0.256, depth: 0.16, accent: "#59e1d2" },
   { id: "about", label: "ABOUT", x: 0.681, y: 0.398, depth: 0.4, accent: "#a78bfa" },
   { id: "contact", label: "CONTACT", x: 0.849, y: 0.463, depth: 0.48, accent: "#e78cdb" },
-  { id: "play", label: "PLAY", x: 0.674, y: 0.624, depth: 0.5, accent: "#59e1d2" },
+  { id: "play", label: "GAMES", x: 0.674, y: 0.624, depth: 0.5, accent: "#59e1d2" },
 ];
 
 export const hotspotById = Object.fromEntries(
