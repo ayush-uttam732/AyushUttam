@@ -48,7 +48,7 @@ function screenMatrix(p: { x: number; y: number }[]) {
 type Phone3DProps = {
   awake: boolean;
   /** The HTML screen element (it gets stuck onto the phone's glass every frame). */
-  screenRef: RefObject<HTMLDivElement>;
+  screenRef: RefObject<HTMLDivElement | null>;
 };
 
 export function Phone3D({ awake, screenRef }: Phone3DProps) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { ArrowLeft, Bug, Gamepad2, Layers, RotateCcw, Rocket, Trophy, X } from "lucide-react";
 
 import { BugGame } from "./BugGame";
@@ -16,7 +16,7 @@ type Entry = {
   how: string;
   accent: string;
   icon: ReactNode;
-  Component: (props: GameProps) => JSX.Element;
+  Component: (props: GameProps) => ReactElement;
 };
 
 const games: Entry[] = [
