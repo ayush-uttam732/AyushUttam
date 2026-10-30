@@ -85,16 +85,18 @@ function makeGlow() {
 
 type BookProps = {
   textures: BookTextures;
-  /** 0 = closed, 1..3 = spreads. */
-  step: number;
+  /**
+   * Continuous position of the book, driven by scroll and by time:
+   * 0 = closed, 1 = first spread open, 2 = second spread open.
+   * Fractions are a page half way through its turn.
+   */
+  goal: MutableRefObject<number>;
 };
 
-export function Book3D({ textures, step }: BookProps) {
+export function Book3D({ textures, goal }: BookProps) {
   const root = useRef<Group>(null);
   const leftSide = useRef<Group>(null);
-  const progress = useRef<number[]>([0, 0, 0]);
-  const stepRef = useRef(step);
-  stepRef.current = step;
+  const progress = useRef<number[]>([0, 0, 0, 0]);
   const start = useRef<number | null>(null);
   const size = useThree((state) => state.size);
   const glow = useRef<Mesh>(null);
@@ -105,10 +107,10 @@ export function Book3D({ textures, step }: BookProps) {
     if (start.current === null) start.current = state.clock.elapsedTime;
     const age = state.clock.elapsedTime - start.current;
 
-    // flip each leaf toward its target (constant speed, eased when drawn)
+    // each leaf chases its own slice of the goal (leaf i covers goal i..i+1)
     progress.current = progress.current.map((value, i) => {
-      const target = stepRef.current > i ? 1 : 0;
-      const speed = (i === 0 ? 0.62 : 0.85) * delta;
+      const target = MathUtils.clamp(goal.current - i, 0, 1);
+      const speed = (i === 0 ? 0.8 : 1.1) * delta;
       return value < target ? Math.min(target, value + speed) : Math.max(target, value - speed);
     });
 
@@ -118,7 +120,7 @@ export function Book3D({ textures, step }: BookProps) {
     // keep the whole book inside the view on any screen shape
     const aspect = size.width / size.height;
     const tan = Math.tan(MathUtils.degToRad(35 / 2));
-    // book screen ka ~80% hissa leti hai: upar/neeche buttons ke liye jagah, aur side panel ke liye bhi (badi screen par)
+    // the book takes ~80% of the screen: room for buttons above/below and the side panel on wide screens
     const wide = size.width > 900;
     const distance = Math.max(
       (COVER_H + 1.5) / (2 * tan),
@@ -172,9 +174,10 @@ export function Book3D({ textures, step }: BookProps) {
           <boxGeometry args={[PAGE_W - 0.03, PAGE_H - 0.03, 0.09]} />
           <meshStandardMaterial color={paper} roughness={0.9} />
         </mesh>
+        {/* last right-hand page, revealed once leaf 1 has turned */}
         <mesh position={[PAGE_W / 2, 0, 0.002]}>
           <planeGeometry args={[PAGE_W, PAGE_H]} />
-          <meshStandardMaterial map={textures.s3R} roughness={0.85} />
+          <meshStandardMaterial map={textures.s4R} roughness={0.85} />
         </mesh>
 
         {/* left-hand stack (grows as the cover opens) */}
@@ -195,7 +198,18 @@ export function Book3D({ textures, step }: BookProps) {
           <meshStandardMaterial color="#0d0b20" roughness={0.5} />
         </mesh>
 
-        {/* sheets: cover, page 1, page 2 */}
+        {/* sheets: cover, then three pages (4 turns in total) */}
+        <Leaf
+          index={3}
+          width={PAGE_W}
+          height={PAGE_H}
+          front={textures.s3R}
+          back={textures.s4L}
+          progress={progress}
+          lag={0.55}
+          zRight={0.02}
+          zLeft={0.08}
+        />
         <Leaf
           index={2}
           width={PAGE_W}
@@ -204,8 +218,8 @@ export function Book3D({ textures, step }: BookProps) {
           back={textures.s3L}
           progress={progress}
           lag={0.55}
-          zRight={0.02}
-          zLeft={0.06}
+          zRight={0.035}
+          zLeft={0.065}
         />
         <Leaf
           index={1}
@@ -215,8 +229,8 @@ export function Book3D({ textures, step }: BookProps) {
           back={textures.s2L}
           progress={progress}
           lag={0.55}
-          zRight={0.04}
-          zLeft={0.04}
+          zRight={0.05}
+          zLeft={0.05}
         />
         <Leaf
           index={0}
@@ -226,7 +240,7 @@ export function Book3D({ textures, step }: BookProps) {
           back={textures.s1L}
           progress={progress}
           lag={0.25}
-          zRight={0.06}
+          zRight={0.07}
           zLeft={0.02}
         />
       </group>

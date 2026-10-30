@@ -1,72 +1,72 @@
-// Edit everything here: it is the text printed inside the 3D book.
-
 export const about = {
   name: "Ayush Uttam",
-  role: "CREATIVE DEVELOPER",
-  photoCaption: "that's me :)",
-  signature: "Good Code, Good Life",
+  role: "Full-Stack Developer · AI Enthusiast",
+  location: "Kanpur, Uttar Pradesh, India",
+  openTo: "Open to internships & collaborations",
+  photoCaption: "Hello, world!",
 
-  who: {
-    title: "Hello, I'm Ayush.",
-    paragraphs: [
-      "I'm a creative developer who turns ideas into interactive, polished experiences, where design meets technology.",
-      "I care as much about how something feels as how it's built, so I sweat the small details: motion, light and the little moments in between.",
-      "Curious by default. Always learning, always shipping.",
-    ],
-    facts: [
-      { label: "BASED IN", value: "India" },
-      { label: "FOCUS", value: "Web, UI & 3D" },
-      { label: "STATUS", value: "Open to opportunities" },
-    ],
+  intro: {
+    title: "A developer who loves exploring technology.",
+    text: "Hello! I'm Ayush Uttam, a Computer Applications student passionate about web development, software technologies and artificial intelligence.",
   },
 
-  doing: {
-    title: "I build things that feel alive.",
+  curiosity: {
+    title: "More than writing code.",
+    text: "I enjoy exploring how different tools, platforms and technologies work together to solve real-world problems.",
+  },
+
+  factsTitle: "At a glance",
+  facts: [
+    { label: "LOCATION", value: "Kanpur, India" },
+    { label: "STUDYING", value: "BCA · UIET" },
+    { label: "FOCUS", value: "Full-Stack + AI" },
+  ],
+
+  skills: {
+    title: "What I work with",
     items: [
-      {
-        title: "Interactive web",
-        text: "Fast, accessible React and TypeScript interfaces with real attention to motion.",
-      },
-      {
-        title: "3D experiences",
-        text: "Three.js and React Three Fiber worlds that run right inside the browser.",
-      },
-      {
-        title: "Product UI",
-        text: "Clean design systems and dashboards that people actually enjoy using.",
-      },
+      "Frontend",
+      "Backend",
+      "Databases",
+      "API integration",
+      "AI tools",
+      "CRM systems",
+      "Website builders",
+      "Workflow automation",
+      "UI design tools",
     ],
   },
 
-  journeyTitle: "A few stops along the way.",
-
-  beyond: {
-    title: "When I'm not at the keyboard.",
-    interests: [
-      "Music",
-      "Gaming",
-      "Late-night coding",
-      "Coffee",
-      "Dogs",
-      "Learning new things",
-    ],
-    note: "Always up for a good conversation.",
+  experience: {
+    title: "Experience",
+    kicker: "PAID INTERNSHIP",
+    org: "Shikom Solutions",
+    text: "Professional, hands-on exposure.",
+    zohoText: "I've also explored the Zoho ecosystem:",
+    zoho: ["Zoho CRM", "Zoho Sites", "Zoho Creator", "Zoho Flow"],
   },
+
+  approachTitle: "My approach",
+  approach: [
+    { title: "Learn", text: "Understand the problem and the tools." },
+    { title: "Explore", text: "Experiment with different technologies." },
+    { title: "Build", text: "Turn the idea into a working product." },
+    { title: "Improve", text: "Iterate, refine and grow." },
+  ],
 
   closing: {
-    title: "Have an idea? Let's build it.",
-    text: "Whether it's a project, a collaboration or just a hello, my inbox is open.",
-    thanks: "Thanks for reading!",
+    title: "Open to internships & collaborations.",
+    text: "I like understanding practical applications rather than limiting myself to a single technology stack.",
+    thanks: "Thanks for stopping by!",
   },
 
-  /** Names in the right-hand chapter list (cover + 3 spreads). */
-  chapters: ["COVER", "WHO AM I", "WHAT I DO", "BEYOND CODE"],
-
-  /** Typed status line for each step. */
+  /** One chapter per book step: 0 = closed cover, 1..4 = the four spreads. */
+  chapters: ["Cover", "Hello", "Curiosity", "Skills & experience", "Approach"],
   status: [
-    "A BOOK APPEARS",
-    "CHAPTER 01 · WHO AM I",
-    "CHAPTER 02 · WHAT I DO",
-    "CHAPTER 03 · BEYOND CODE",
+    "opening the book...",
+    "loading about.me ... ok",
+    "reading interests ... ok",
+    "loading skills + experience ... ok",
+    "story fully loaded",
   ],
 };

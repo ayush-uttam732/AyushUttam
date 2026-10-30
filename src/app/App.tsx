@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
-  ArrowDownRight,
+  ArrowUp,
   ArrowUpRight,
   Briefcase,
   Bug,
-  Gamepad2,
-  Github,
   Layers,
   Box,
-  Linkedin,
   Mail,
   Menu,
   Rocket,
@@ -30,12 +27,13 @@ import { about } from "../data/about";
 import { projects } from "../data/projects";
 import { skillGroups } from "../data/skills";
 import type { PanelName } from "../types";
-import { SOCIAL } from "../utils/constants";
 import Backdrop3D from "./Backdrop3d";
-import { CtaBand, Marquee, SectionHead, SideDots, Statement, StatsStrip, Words, useChapter } from "./ScrollExtras";
+import { Classic2D } from "./Classic2D";
+import { CtaBand, Marquee, SideDots, StatsStrip, Words, useChapter } from "./ScrollExtras";
 
 import "./App.css";
 import "./scroll-polish.css";
+import "./classic2d.css";
 
 const sections = [
   { id: "home", label: "Home" },
@@ -137,48 +135,12 @@ function Chapter({
   );
 }
 
-/** Card that tilts in 3D towards the pointer. */
-function Tilt({
-  children,
-  className = "",
-  onClick,
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  onClick?: () => void;
-  delay?: number;
-}) {
-  const move = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const el = event.currentTarget;
-    const r = el.getBoundingClientRect();
-    el.style.setProperty("--ry", `${((event.clientX - r.left) / r.width - 0.5) * 12}deg`);
-    el.style.setProperty("--rx", `${((event.clientY - r.top) / r.height - 0.5) * -10}deg`);
-  };
-  const leave = (event: ReactPointerEvent<HTMLDivElement>) => {
-    event.currentTarget.style.setProperty("--ry", "0deg");
-    event.currentTarget.style.setProperty("--rx", "0deg");
-  };
-
-  return (
-    <div className="tilt-scene rv" style={{ "--d": delay } as CSSProperties}>
-      <div
-        className={`tilt ${className}`}
-        onPointerMove={move}
-        onPointerLeave={leave}
-        onClick={onClick}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function App() {
   const [activePanel, setActivePanel] = useState<PanelName | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [solid, setSolid] = useState(false);
   const [roomPaused, setRoomPaused] = useState(false);
+  const [showTop, setShowTop] = useState(false);
   const [current, setCurrent] = useState("home");
   const [mode3d, setMode3d] = useState(() => {
     try {
@@ -254,6 +216,7 @@ function App() {
       room.current?.classList.toggle("is-passed", p > 0.55);
       scrollZoom.current = 1 + p * 0.22;
       setSolid(y > 40);
+      setShowTop(y > window.innerHeight * 1.5);
       setRoomPaused(y > window.innerHeight * 1.1);
     };
     const onScroll = () => {
@@ -392,10 +355,11 @@ function App() {
                 .
               </span>
             </h1>
-            <p className="hero-role">Creative Developer · Web &amp; 3D Experiences</p>
+            <p className="hero-role">Full-Stack Developer · Web Technologies &amp; AI Enthusiast</p>
             <p className="hero-text">
-              I design and build fast, polished web products and immersive 3D
-              experiences, where clean engineering meets thoughtful design.
+              Building digital experiences with curiosity, creativity, and code. A Computer
+              Science student with hands-on exposure to web development, backend, AI-powered
+              apps and business automation tools.
             </p>
             <div className="hero-actions">
               <a className="btn btn-primary" href="#projects">
@@ -413,7 +377,6 @@ function App() {
           </div>
         </section>
 
-        <Statement text="I build fast, polished web products and immersive 3D experiences, where clean engineering meets thoughtful design." />
         <Marquee items={allSkills} />
         <StatsStrip stats={stats} />
 
@@ -423,7 +386,7 @@ function App() {
               id="about"
               num="01"
               kicker="ABOUT"
-              title={about.who.title}
+              title={about.intro.title}
               text="Scroll down to open the book."
               ghost="ABOUT"
               render={() => <AboutBook onClose={() => nextAfter("about")} />}
@@ -469,186 +432,7 @@ function App() {
             <CtaBand onTalk={() => go("contact")} />
           </>
         ) : (
-          <>
-        {/* ABOUT */}
-        <section className="panel-section" id="about">
-          <div className="about-grid">
-            <Tilt className="book-3d">
-              <div className="book-cover lift">
-                <span className="glyph">&lt;/&gt;</span>
-                <strong>
-                  AYUSH
-                  <br />
-                  UTTAM
-                </strong>
-                <small>ABOUT ME</small>
-              </div>
-            </Tilt>
-
-            <div className="about-copy">
-              <SectionHead num="01" kicker="ABOUT" title={about.who.title} />
-              {about.who.paragraphs.map((text, i) => (
-                <p key={text} className="rv" style={{ "--d": i + 1 } as CSSProperties}>
-                  {text}
-                </p>
-              ))}
-              <div className="facts rv" style={{ "--d": 4 } as CSSProperties}>
-                {about.who.facts.map((fact) => (
-                  <div className="fact" key={fact.label}>
-                    <small>{fact.label}</small>
-                    <b>{fact.value}</b>
-                  </div>
-                ))}
-              </div>
-              <button className="btn btn-primary rv" onClick={() => openPanel("about")}>
-                Open my story in 3D <ArrowUpRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* SKILLS */}
-        <section className="panel-section" id="skills">
-          <SectionHead
-            num="02"
-            kicker="SKILLS"
-            title="Tools I use to ship."
-            text="A focused stack for building fast, accessible and visually rich products."
-          />
-          <div className="skills-grid">
-            {skillGroups.map((group, i) => (
-              <Tilt key={group.label} className="skill-card" delay={i}>
-                <span className="idx lift-sm">0{i + 1}</span>
-                <h3 className="lift-sm">{group.label}</h3>
-                <div className="skill-tags lift">
-                  {group.items.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
-              </Tilt>
-            ))}
-          </div>
-          <div className="section-cta rv">
-            <button className="btn" onClick={() => openPanel("skills")}>
-              Explore as 3D neural brain <ArrowUpRight size={16} />
-            </button>
-          </div>
-        </section>
-
-        {/* PROJECTS */}
-        <section className="panel-section" id="projects">
-          <SectionHead
-            num="03"
-            kicker="PROJECTS"
-            title="Selected work."
-            text="A few things I have designed and built recently."
-          />
-          <div className="projects-grid">
-            {projects.map((project, i) => (
-              <Tilt key={project.id} className="project-tile" delay={i}>
-                <div className="shot lift-sm">{project.title.slice(0, 2).toUpperCase()}</div>
-                <h3 className="lift-sm">{project.title}</h3>
-                <p>{project.description}</p>
-                <div className="tags">
-                  {project.tags.map((tag) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-                {project.href && (
-                  <a
-                    className="go lift"
-                    href={project.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Open ${project.title}`}
-                  >
-                    <ArrowUpRight size={18} />
-                  </a>
-                )}
-              </Tilt>
-            ))}
-          </div>
-          <div className="section-cta rv">
-            <button className="btn btn-primary" onClick={() => openPanel("projects")}>
-              Browse on the 3D laptop <ArrowUpRight size={16} />
-            </button>
-          </div>
-        </section>
-
-        {/* GAMES */}
-        <section className="panel-section" id="games">
-          <SectionHead
-            num="04"
-            kicker="GAMES"
-            title="Take a break. Play something."
-            text="Three tiny 3D games, built for a quick round. Beat your best score."
-          />
-          <div className="games-grid">
-            {arcade.map((g, i) => (
-              <Tilt key={g.title} className="game-card" delay={i} onClick={() => openPanel("play")}>
-                <div className="ico lift" style={{ "--c": g.color } as CSSProperties}>
-                  {g.icon}
-                </div>
-                <div style={{ "--c": g.color } as CSSProperties}>
-                  <small>{g.tag}</small>
-                  <h3>{g.title}</h3>
-                  <p>{g.text}</p>
-                  <span className="play">PLAY ▸</span>
-                </div>
-              </Tilt>
-            ))}
-          </div>
-          <div className="section-cta rv">
-            <button className="btn" onClick={startGame}>
-              <Gamepad2 size={16} /> Or hunt the 5 hidden orbs in the room
-            </button>
-          </div>
-        </section>
-
-        {/* CONTACT */}
-        <section className="panel-section" id="contact">
-          <div className="contact-wrap">
-            <div>
-              <span className="kicker rv">05 · CONTACT</span>
-              <h2 className="rv">
-                Have an idea?
-                <br />
-                Let&apos;s build it.
-              </h2>
-              <p className="rv">
-                Whether it&apos;s a project, a collaboration or just a hello, send a
-                message and it lands straight in my WhatsApp.
-              </p>
-              <div className="contact-links rv">
-                <button className="btn btn-primary" onClick={() => openPanel("contact")}>
-                  Message me on WhatsApp <ArrowDownRight size={16} />
-                </button>
-                <a className="btn" href={`mailto:${SOCIAL.email}`}>
-                  <Mail size={16} /> Email
-                </a>
-                <a className="btn" href={SOCIAL.github} target="_blank" rel="noreferrer">
-                  <Github size={16} />
-                </a>
-                <a className="btn" href={SOCIAL.linkedin} target="_blank" rel="noreferrer">
-                  <Linkedin size={16} />
-                </a>
-              </div>
-            </div>
-
-            <Tilt className="phone-teaser" onClick={() => openPanel("contact")}>
-              <div className="phone-shape lift">
-                <div className="scr">
-                  <i />
-                  <i />
-                  <i />
-                  <b>WHATSAPP</b>
-                </div>
-              </div>
-            </Tilt>
-          </div>
-        </section>
-
-          </>
+          <Classic2D onOpenPanel={openPanel} onStartGame={startGame} />
         )}
 
         <footer className="site-footer">
@@ -663,6 +447,15 @@ function App() {
       {!mode3d && activePanel === "play" && <GamesArcade onClose={closePanel} onStartHunt={startGame} />}
       {!mode3d && activePanel === "skills" && <SkillsPanel onClose={closePanel} />}
       {!mode3d && activePanel === "projects" && <ProjectsLaptopPanel onClose={closePanel} />}
+
+      <button
+        className={`to-top ${showTop ? "is-visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+        tabIndex={showTop ? 0 : -1}
+      >
+        <ArrowUp size={18} />
+      </button>
 
       <GameHUD />
       <AchievementSystem />

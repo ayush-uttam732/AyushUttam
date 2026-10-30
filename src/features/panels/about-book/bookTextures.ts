@@ -2,8 +2,6 @@ import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from "three";
 import type { Texture } from "three";
 
 import { about } from "../../../data/about";
-import { experience } from "../../../data/experience";
-import { SOCIAL } from "../../../utils/constants";
 
 /* ------------------------------------------------------------------ sizes */
 
@@ -335,7 +333,7 @@ function coverFront() {
   ctx.fillStyle = "rgba(200,210,235,0.6)";
   ctx.font = `500 17px ${BODY}`;
   spacing(ctx, 6);
-  ctx.fillText("THE STORY SO FAR", cx, 1072);
+  ctx.fillText("SCROLL TO OPEN", cx, 1072);
   ctx.restore();
 
   return toTexture(canvas, false);
@@ -376,337 +374,291 @@ function drawPhoto(ctx: Ctx, photo: HTMLImageElement | null, w: number, h: numbe
   ctx.restore();
 }
 
-function pagePhoto(photo: HTMLImageElement | null) {
-  return (ctx: Ctx) => {
-    label(ctx, "HELLO, WORLD", 90, 112);
+const L = 84;
+const MAXW = PW - L * 2;
 
-    // polaroid
-    ctx.save();
-    ctx.translate(PW / 2 - 14, 440);
-    ctx.rotate(-0.035);
-    ctx.shadowColor = "rgba(40,25,10,0.38)";
-    ctx.shadowBlur = 34;
-    ctx.shadowOffsetY = 16;
-    ctx.fillStyle = "#fcf9f2";
-    ctx.fillRect(-290, -330, 580, 700);
-    ctx.shadowColor = "transparent";
-
-    ctx.save();
-    ctx.translate(-266, -306);
-    drawPhoto(ctx, photo, 532, 566);
-    ctx.restore();
-
-    ctx.fillStyle = AMBER;
-    ctx.font = `600 50px ${HAND}`;
-    ctx.textAlign = "center";
-    spacing(ctx, 0);
-    ctx.fillText(about.photoCaption, 0, 336);
-
-    // tape
-    ctx.fillStyle = "rgba(255,226,150,0.78)";
-    ctx.save();
-    ctx.translate(-215, -330);
-    ctx.rotate(-0.5);
-    ctx.fillRect(-60, -18, 120, 36);
-    ctx.restore();
-    ctx.save();
-    ctx.translate(215, -330);
-    ctx.rotate(0.5);
-    ctx.fillRect(-60, -18, 120, 36);
-    ctx.restore();
-    ctx.restore();
-
-    // name + role
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.font = `700 70px ${HEAD}`;
-    spacing(ctx, -2);
-    ctx.fillStyle = INK;
-    ctx.fillText(about.name, 90, 925);
-    const nameWidth = ctx.measureText(about.name).width;
-    ctx.fillStyle = TEAL;
-    ctx.fillText(".", 90 + nameWidth, 925);
-    ctx.restore();
-
-    label(ctx, about.role, 92, 975, PURPLE);
-
-    ctx.save();
-    ctx.translate(92, 1050);
-    ctx.rotate(-0.025);
-    ctx.fillStyle = AMBER;
-    ctx.font = `600 54px ${HAND}`;
-    spacing(ctx, 0);
-    ctx.fillText(about.signature, 0, 0);
-    ctx.restore();
-
-  };
-}
-
-function pageWho(ctx: Ctx) {
-  const L = 84;
-  const maxW = PW - L * 2;
-
-  label(ctx, "01 — WHO AM I", L, 120);
-  let y = heading(ctx, about.who.title, L, 226, maxW, 80);
-
-  ctx.fillStyle = TEAL;
-  ctx.fillRect(L, y - 30, 90, 6);
-
-  ctx.fillStyle = SOFT;
-  ctx.font = `400 31px ${BODY}`;
-  spacing(ctx, 0);
-  y += 40;
-  for (const text of about.who.paragraphs) {
-    y = paragraph(ctx, text, L, y, maxW, 49) + 22;
+/** Shrinks the font until the text fits on one line. */
+function fit(ctx: Ctx, text: string, maxW: number, weight: number, size: number, family: string) {
+  let s = size;
+  ctx.font = `${weight} ${s}px ${family}`;
+  while (ctx.measureText(text).width > maxW && s > 20) {
+    s -= 2;
+    ctx.font = `${weight} ${s}px ${family}`;
   }
-
-  // facts
-  const top = Math.max(y + 24, 820);
-  about.who.facts.forEach((fact, i) => {
-    const fy = top + i * 74;
-    ctx.fillStyle = "rgba(29,27,39,0.14)";
-    ctx.fillRect(L, fy - 38, maxW, 2);
-    label(ctx, fact.label, L, fy);
-    ctx.save();
-    ctx.textAlign = "right";
-    ctx.fillStyle = INK;
-    ctx.font = `600 32px ${HEAD}`;
-    spacing(ctx, -0.5);
-    ctx.fillText(fact.value, PW - L, fy + 2);
-    ctx.restore();
-  });
-
-  pageNumber(ctx, "02", "right");
 }
 
-function pageDoing(ctx: Ctx) {
-  const L = 84;
-  const maxW = PW - L * 2;
-
-  label(ctx, "02 — WHAT I DO", L, 120);
-  let y = heading(ctx, about.doing.title, L, 226, maxW, 70);
-  ctx.fillStyle = TEAL;
+/** Label + big heading + short colour bar. Returns the y the body can start at. */
+function head(ctx: Ctx, tag: string, title: string, color: string, size = 80) {
+  label(ctx, tag, L, 120, color);
+  const y = heading(ctx, title, L, 226, MAXW, size);
+  ctx.fillStyle = color;
   ctx.fillRect(L, y - 30, 90, 6);
-
-  y += 52;
-  about.doing.items.forEach((item, i) => {
-    const iy = y + i * 232;
-
-    ctx.save();
-    ctx.strokeStyle = i === 1 ? PURPLE : TEAL;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(L + 38, iy + 26, 38, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = i === 1 ? PURPLE : TEAL;
-    ctx.font = `700 30px ${HEAD}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    spacing(ctx, 0);
-    ctx.fillText(`0${i + 1}`, L + 38, iy + 28);
-    ctx.restore();
-
-    ctx.save();
-    ctx.textAlign = "left";
-    ctx.fillStyle = INK;
-    ctx.font = `700 40px ${HEAD}`;
-    spacing(ctx, -1);
-    ctx.fillText(item.title, L + 110, iy + 18);
-    ctx.fillStyle = SOFT;
-    ctx.font = `400 28px ${BODY}`;
-    spacing(ctx, 0);
-    paragraph(ctx, item.text, L + 110, iy + 66, maxW - 110, 42);
-    ctx.restore();
-  });
-
-  pageNumber(ctx, "03", "left");
+  return y + 46;
 }
 
-function pageJourney(ctx: Ctx) {
-  const L = 84;
-  const maxW = PW - L * 2;
-
-  label(ctx, "THE JOURNEY", L, 120, PURPLE);
-  const y = heading(ctx, about.journeyTitle, L, 226, maxW, 70);
-  ctx.fillStyle = PURPLE;
-  ctx.fillRect(L, y - 30, 90, 6);
-
-  const x0 = L + 14;
-  let cy = y + 70;
-  const startY = cy - 20;
-
-  experience.forEach((item, i) => {
-    ctx.fillStyle = TEAL;
-    ctx.beginPath();
-    ctx.arc(x0, cy - 12, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(15,159,147,0.35)";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(x0, cy - 12, 22, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.save();
-    ctx.textAlign = "left";
-    label(ctx, item.period, x0 + 54, cy - 6);
-    ctx.fillStyle = INK;
-    ctx.font = `700 42px ${HEAD}`;
-    spacing(ctx, -1);
-    ctx.fillText(item.role, x0 + 54, cy + 44);
-    ctx.fillStyle = PURPLE;
-    ctx.font = `500 26px ${BODY}`;
-    spacing(ctx, 0);
-    ctx.fillText(item.organization, x0 + 54, cy + 86);
-    ctx.fillStyle = SOFT;
-    ctx.font = `400 27px ${BODY}`;
-    const next = paragraph(ctx, item.description, x0 + 54, cy + 132, maxW - 70, 40);
-    ctx.restore();
-
-    cy = next + 70 + (i === experience.length - 1 ? 0 : 0);
-  });
-
-  // "next" dot
-  ctx.strokeStyle = TEAL;
-  ctx.setLineDash([4, 8]);
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(x0, cy - 12, 13, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
+function body(ctx: Ctx, text: string, y: number, size = 38, lineHeight = 58) {
   ctx.save();
-  ctx.fillStyle = AMBER;
-  ctx.font = `600 46px ${HAND}`;
+  ctx.fillStyle = SOFT;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `400 ${size}px ${BODY}`;
   spacing(ctx, 0);
-  ctx.fillText("next chapter: your project?", x0 + 54, cy - 2);
+  const end = paragraph(ctx, text, L, y, MAXW, lineHeight);
   ctx.restore();
-
-  // timeline rail
-  ctx.strokeStyle = "rgba(15,159,147,0.4)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(x0, startY);
-  ctx.lineTo(x0, cy - 30);
-  ctx.stroke();
-
-  pageNumber(ctx, "04", "right");
+  return end;
 }
 
-function pageBeyond(ctx: Ctx) {
-  const L = 84;
-  const maxW = PW - L * 2;
-
-  label(ctx, "03 — BEYOND CODE", L, 120, AMBER);
-  let y = heading(ctx, about.beyond.title, L, 226, maxW, 70);
-  ctx.fillStyle = AMBER;
-  ctx.fillRect(L, y - 30, 90, 6);
-
-  // interest chips
-  y += 50;
-  let x = L;
-  ctx.font = `500 30px ${BODY}`;
-  spacing(ctx, 0);
+/** Outlined pills that wrap onto new rows. Returns the bottom y. */
+function chips(ctx: Ctx, items: string[], y: number, size = 30, height = 62, gap = 16) {
   const colors = [TEAL, PURPLE, AMBER];
-  about.beyond.interests.forEach((text, i) => {
+  let x = L;
+  ctx.save();
+  ctx.font = `500 ${size}px ${BODY}`;
+  spacing(ctx, 0);
+  items.forEach((text, i) => {
     const w = ctx.measureText(text).width + 56;
     if (x + w > PW - L) {
       x = L;
-      y += 84;
+      y += height + gap;
     }
     ctx.strokeStyle = colors[i % 3];
     ctx.lineWidth = 2.5;
-    rr(ctx, x, y, w, 58, 29);
+    rr(ctx, x, y, w, height, height / 2);
     ctx.stroke();
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     ctx.fill();
     ctx.fillStyle = INK;
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
-    ctx.fillText(text, x + 28, y + 30);
-    x += w + 16;
+    ctx.fillText(text, x + 28, y + height / 2 + 1);
+    x += w + gap;
+  });
+  ctx.restore();
+  return y + height;
+}
+
+/** Spread 1, left: photo, name, role, location, availability. */
+function pagePhoto(photo: HTMLImageElement | null) {
+  return (ctx: Ctx) => {
+    label(ctx, "HELLO, WORLD", 90, 112);
+
+    // polaroid
+    ctx.save();
+    ctx.translate(PW / 2 - 14, 430);
+    ctx.rotate(-0.035);
+    ctx.shadowColor = "rgba(40,25,10,0.38)";
+    ctx.shadowBlur = 34;
+    ctx.shadowOffsetY = 16;
+    ctx.fillStyle = "#fcf9f2";
+    ctx.fillRect(-290, -320, 580, 690);
+    ctx.shadowColor = "transparent";
+
+    ctx.save();
+    ctx.translate(-266, -296);
+    drawPhoto(ctx, photo, 532, 566);
+    ctx.restore();
+
+    ctx.fillStyle = AMBER;
+    ctx.font = `600 56px ${HAND}`;
+    ctx.textAlign = "center";
+    spacing(ctx, 0);
+    ctx.fillText(about.photoCaption, 0, 338);
+
+    // tape
+    ctx.fillStyle = "rgba(255,226,150,0.78)";
+    ctx.save();
+    ctx.translate(-215, -320);
+    ctx.rotate(-0.5);
+    ctx.fillRect(-60, -18, 120, 36);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(215, -320);
+    ctx.rotate(0.5);
+    ctx.fillRect(-60, -18, 120, 36);
+    ctx.restore();
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+
+    // name
+    ctx.font = `700 88px ${HEAD}`;
+    spacing(ctx, -3);
+    ctx.fillStyle = INK;
+    ctx.fillText(about.name, 90, 922);
+    const nameWidth = ctx.measureText(about.name).width;
+    ctx.fillStyle = TEAL;
+    ctx.fillText(".", 90 + nameWidth, 922);
+
+    // role + location
+    spacing(ctx, 0.5);
+    ctx.fillStyle = PURPLE;
+    fit(ctx, about.role, MAXW - 10, 600, 30, BODY);
+    ctx.fillText(about.role, 92, 976);
+
+    ctx.fillStyle = SOFT;
+    fit(ctx, about.location, MAXW - 10, 500, 28, BODY);
+    ctx.fillText(about.location, 92, 1018);
+    ctx.restore();
+
+    // availability, handwritten
+    ctx.save();
+    ctx.translate(92, 1082);
+    ctx.rotate(-0.02);
+    ctx.fillStyle = AMBER;
+    spacing(ctx, 0);
+    fit(ctx, about.openTo, MAXW - 24, 600, 58, HAND);
+    ctx.fillText(about.openTo, 0, 0);
+    ctx.restore();
+  };
+}
+
+/** Spread 1, right. */
+function pageIntro(ctx: Ctx) {
+  const y = head(ctx, "01 — ABOUT", about.intro.title, TEAL, 76);
+  body(ctx, about.intro.text, y + 14);
+  pageNumber(ctx, "02", "right");
+}
+
+/** Spread 2, left. */
+function pageCuriosity(ctx: Ctx) {
+  const y = head(ctx, "02 — CURIOSITY", about.curiosity.title, PURPLE);
+  body(ctx, about.curiosity.text, y + 14);
+  pageNumber(ctx, "03", "left");
+}
+
+/** Spread 2, right. */
+function pageFacts(ctx: Ctx) {
+  const y = head(ctx, "03 — AT A GLANCE", about.factsTitle, AMBER);
+
+  about.facts.forEach((fact, i) => {
+    const fy = y + 90 + i * 170;
+    ctx.fillStyle = "rgba(29,27,39,0.14)";
+    ctx.fillRect(L, fy - 54, MAXW, 2);
+
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = TEAL;
+    ctx.font = `600 24px ${BODY}`;
+    spacing(ctx, 5);
+    ctx.fillText(fact.label, L, fy);
+
+    ctx.fillStyle = INK;
+    spacing(ctx, -1);
+    fit(ctx, fact.value, MAXW, 700, 62, HEAD);
+    ctx.fillText(fact.value, L, fy + 76);
+    ctx.restore();
   });
 
-  // handwritten note
-  ctx.save();
-  ctx.translate(L + 6, Math.max(y + 190, 760));
-  ctx.rotate(-0.03);
-  ctx.fillStyle = AMBER;
-  ctx.textBaseline = "alphabetic";
-  ctx.font = `600 62px ${HAND}`;
-  spacing(ctx, 0);
-  paragraph(ctx, about.beyond.note, 0, 0, maxW - 20, 70);
-  ctx.restore();
+  pageNumber(ctx, "04", "right");
+}
 
-  ctx.save();
-  ctx.strokeStyle = "rgba(184,114,30,0.55)";
-  ctx.lineWidth = 3;
-  ctx.setLineDash([2, 12]);
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(L, 1000);
-  ctx.bezierCurveTo(L + 160, 960, L + 300, 1040, L + 460, 990);
-  ctx.stroke();
-  ctx.restore();
-
+/** Spread 3, left. */
+function pageSkills(ctx: Ctx) {
+  const y = head(ctx, "04 — SKILLS", about.skills.title, TEAL);
+  chips(ctx, about.skills.items, y + 10, 32, 68, 16);
   pageNumber(ctx, "05", "left");
 }
 
-function pageClosing(ctx: Ctx) {
-  const L = 84;
-  const maxW = PW - L * 2;
+/** Spread 3, right. */
+function pageExperience(ctx: Ctx) {
+  const y = head(ctx, "05 — EXPERIENCE", about.experience.title, PURPLE);
 
-  label(ctx, "LET'S CONNECT", L, 120);
-  let y = heading(ctx, about.closing.title, L, 226, maxW, 74);
-  ctx.fillStyle = TEAL;
-  ctx.fillRect(L, y - 30, 90, 6);
-
-  ctx.fillStyle = SOFT;
-  ctx.font = `400 31px ${BODY}`;
-  spacing(ctx, 0);
-  y = paragraph(ctx, about.closing.text, L, y + 40, maxW, 49);
-
-  // email box
-  y += 34;
-  ctx.strokeStyle = TEAL;
+  // internship card
+  const cy = y + 10;
+  ctx.save();
+  ctx.strokeStyle = PURPLE;
   ctx.lineWidth = 3;
-  rr(ctx, L, y, maxW, 92, 46);
+  rr(ctx, L, cy, MAXW, 250, 28);
   ctx.stroke();
-  ctx.fillStyle = "rgba(15,159,147,0.08)";
+  ctx.fillStyle = "rgba(108,79,224,0.07)";
   ctx.fill();
-  ctx.fillStyle = INK;
-  ctx.font = `600 32px ${HEAD}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(SOCIAL.email, PW / 2, y + 47);
 
-  // links
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = PURPLE;
+  ctx.font = `600 22px ${BODY}`;
+  spacing(ctx, 5);
+  ctx.fillText(about.experience.kicker, L + 36, cy + 60);
+
+  ctx.fillStyle = INK;
+  spacing(ctx, -1.5);
+  fit(ctx, about.experience.org, MAXW - 72, 700, 60, HEAD);
+  ctx.fillText(about.experience.org, L + 36, cy + 142);
+
   ctx.fillStyle = SOFT;
-  ctx.font = `500 26px ${BODY}`;
-  spacing(ctx, 1);
-  const shorten = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-  ctx.fillText(`GitHub  ·  ${shorten(SOCIAL.github)}`, L, y + 160);
-  ctx.fillText(`LinkedIn  ·  ${shorten(SOCIAL.linkedin)}`, L, y + 204);
+  ctx.font = `400 30px ${BODY}`;
+  spacing(ctx, 0);
+  ctx.fillText(about.experience.text, L + 36, cy + 200);
+  ctx.restore();
+
+  // zoho
+  const zy = body(ctx, about.experience.zohoText, cy + 330, 36, 54);
+  chips(ctx, about.experience.zoho, zy + 4, 32, 68, 16);
+
+  pageNumber(ctx, "06", "right");
+}
+
+/** Spread 4, left. */
+function pageApproach(ctx: Ctx) {
+  const y = head(ctx, "06 — HOW I WORK", about.approachTitle, AMBER);
+  const colors = [TEAL, PURPLE, AMBER, TEAL];
+
+  about.approach.forEach((item, i) => {
+    const iy = y + 20 + i * 172;
+
+    ctx.save();
+    ctx.strokeStyle = colors[i];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(L + 40, iy + 26, 40, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = colors[i];
+    ctx.font = `700 32px ${HEAD}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    spacing(ctx, 0);
+    ctx.fillText(`0${i + 1}`, L + 40, iy + 28);
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = INK;
+    ctx.font = `700 48px ${HEAD}`;
+    spacing(ctx, -1);
+    ctx.fillText(item.title, L + 116, iy + 22);
+    ctx.fillStyle = SOFT;
+    ctx.font = `400 30px ${BODY}`;
+    spacing(ctx, 0);
+    paragraph(ctx, item.text, L + 116, iy + 72, MAXW - 116, 42);
+    ctx.restore();
+  });
+
+  pageNumber(ctx, "07", "left");
+}
+
+/** Spread 4, right. */
+function pageClosing(ctx: Ctx) {
+  const y = head(ctx, "LET'S BUILD", about.closing.title, TEAL, 76);
+  body(ctx, about.closing.text, y + 14, 36, 54);
 
   // sign-off
   ctx.save();
-  ctx.translate(L, 960);
+  ctx.translate(L, 950);
   ctx.rotate(-0.04);
   ctx.fillStyle = AMBER;
-  ctx.font = `600 78px ${HAND}`;
   spacing(ctx, 0);
+  fit(ctx, about.closing.thanks, MAXW - 20, 600, 76, HAND);
   ctx.fillText(about.closing.thanks, 0, 0);
-  ctx.font = `600 52px ${HAND}`;
+  ctx.font = `600 54px ${HAND}`;
   ctx.fillStyle = PURPLE;
-  ctx.fillText(`— ${about.name.split(" ")[0]}`, 6, 66);
+  ctx.fillText(`— ${about.name.split(" ")[0]}`, 6, 70);
   ctx.restore();
 
   label(ctx, "THE END... FOR NOW", L, PH - 58, "rgba(60,50,70,0.55)");
-}
-
-function blankPage() {
-  return innerPage("left", () => undefined);
 }
 
 /* ------------------------------------------------------------------ build */
@@ -719,7 +671,8 @@ export type BookTextures = {
   s2R: Texture;
   s3L: Texture;
   s3R: Texture;
-  blank: Texture;
+  s4L: Texture;
+  s4R: Texture;
   dispose: () => void;
 };
 
@@ -727,12 +680,13 @@ export function buildBookTextures(photo: HTMLImageElement | null): BookTextures 
   const list = {
     coverFront: coverFront(),
     s1L: coverInside(pagePhoto(photo)),
-    s1R: innerPage("right", pageWho),
-    s2L: innerPage("left", pageDoing),
-    s2R: innerPage("right", pageJourney),
-    s3L: innerPage("left", pageBeyond),
-    s3R: innerPage("right", pageClosing),
-    blank: blankPage(),
+    s1R: innerPage("right", pageIntro),
+    s2L: innerPage("left", pageCuriosity),
+    s2R: innerPage("right", pageFacts),
+    s3L: innerPage("left", pageSkills),
+    s3R: innerPage("right", pageExperience),
+    s4L: innerPage("left", pageApproach),
+    s4R: innerPage("right", pageClosing),
   };
 
   return {
