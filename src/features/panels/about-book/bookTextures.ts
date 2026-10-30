@@ -174,7 +174,7 @@ function makeCanvas(w: number, h: number) {
 function toTexture(canvas: HTMLCanvasElement, mirror: boolean) {
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 8;
+  texture.anisotropy = 16;
 
   if (mirror) {
     // seen from behind a plane the picture is flipped, so flip it back
@@ -348,6 +348,7 @@ function drawPhoto(ctx: Ctx, photo: HTMLImageElement | null, w: number, h: numbe
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
   ctx.clip();
+  ctx.imageSmoothingQuality = "high";
 
   if (photo) {
     const scale = Math.max(w / photo.width, h / photo.height);

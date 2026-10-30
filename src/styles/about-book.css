@@ -287,3 +287,56 @@
     bottom: 120px;
   }
 }
+/* =========================================================
+   Scroll-chapter me (is-embedded): transparent, centered,
+   website ke 3D background ke saath mile
+========================================================= */
+
+.about-book.is-embedded {
+  position: absolute;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 52% 58% at 50% 50%, rgba(30, 24, 70, 0.34), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 100%, rgba(89, 225, 210, 0.08), transparent 70%);
+  backdrop-filter: none;
+  animation: none;
+}
+
+.about-book.is-embedded .about-book-head {
+  top: 84px;
+  padding: 7px 16px;
+  border: 1px solid rgba(89, 225, 210, 0.28);
+  border-radius: 999px;
+  background: rgba(8, 11, 22, 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.about-book.is-embedded .about-book-chapters {
+  right: clamp(20px, 4vw, 56px);
+  backdrop-filter: blur(14px);
+  background: rgba(8, 11, 22, 0.5);
+}
+
+.about-book.is-embedded .about-book-foot {
+  right: clamp(20px, 4vw, 56px);
+  bottom: 32px;
+  left: clamp(20px, 4vw, 56px);
+}
+
+.about-book.is-embedded .book-log {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(8, 11, 22, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 900px) {
+  .about-book.is-embedded .about-book-head {
+    top: 78px;
+  }
+
+  .about-book.is-embedded .about-book-foot {
+    right: 16px;
+    left: 16px;
+  }
+}

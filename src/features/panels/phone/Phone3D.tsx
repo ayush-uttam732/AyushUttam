@@ -1,8 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { RoundedBox, Sparkles } from "@react-three/drei";
-import { MathUtils, Vector3 } from "three";
+import { AdditiveBlending, CanvasTexture, MathUtils, Vector3 } from "three";
 import type { Group, PerspectiveCamera } from "three";
 
 const PHONE_W = 1.5;
@@ -45,6 +45,20 @@ function screenMatrix(p: { x: number; y: number }[]) {
   return `matrix3d(${a / w},${d / w},0,${g / w},${b / ht},${e / ht},0,${h / ht},0,0,1,0,${p0.x},${p0.y},0,1)`;
 }
 
+/** soft green/violet glow behind the phone */
+function makeGlow() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d")!;
+  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gr.addColorStop(0, "rgba(37,211,102,0.38)");
+  gr.addColorStop(0.45, "rgba(139,108,255,0.18)");
+  gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 256, 256);
+  return new CanvasTexture(c);
+}
+
 type Phone3DProps = {
   awake: boolean;
   /** The HTML screen element (it gets stuck onto the phone's glass every frame). */
@@ -56,6 +70,20 @@ export function Phone3D({ awake, screenRef }: Phone3DProps) {
   const startTime = useRef<number | null>(null);
 
   const size = useThree((state) => state.size);
+  const rings = useRef<Group>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+  const glowTex = useMemo(makeGlow, []);
+  useEffect(() => () => glowTex.dispose(), [glowTex]);
+
+  // canvas par pointer events band hain (overlay click-through hai), isliye mouse window se lete hain
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
 
   useFrame((state) => {
     if (startTime.current === null) {
@@ -83,12 +111,17 @@ export function Phone3D({ awake, screenRef }: Phone3DProps) {
 
     const t = state.clock.elapsedTime;
 
+    if (rings.current) {
+      rings.current.rotation.z = t * 0.3;
+      rings.current.scale.setScalar(0.6 + 0.4 * intro);
+    }
+
     phone.position.y = -2.5 * (1 - intro) + Math.sin(t * 1.1) * 0.035;
     phone.scale.setScalar(0.6 + 0.4 * intro);
 
     // Gentle tilt keeps the front of the phone readable.
-    phone.rotation.x = MathUtils.lerp(phone.rotation.x, -state.pointer.y * 0.035, 0.06);
-    phone.rotation.y = MathUtils.lerp(phone.rotation.y, state.pointer.x * 0.045, 0.06);
+    phone.rotation.x = MathUtils.lerp(phone.rotation.x, -mouse.current.y * 0.06, 0.06);
+    phone.rotation.y = MathUtils.lerp(phone.rotation.y, mouse.current.x * 0.12, 0.06);
     phone.rotation.z = Math.sin(t * 0.65) * 0.008;
 
     // pin the HTML screen onto the 3D glass (follows float / scale / tilt)
@@ -132,6 +165,28 @@ export function Phone3D({ awake, screenRef }: Phone3DProps) {
         opacity={0.65}
         color="#59e1d2"
       />
+
+      {/* glow + orbit rings behind the phone (depth) */}
+      <mesh position={[0, 0, -0.9]}>
+        <planeGeometry args={[7, 7]} />
+        <meshBasicMaterial map={glowTex} transparent blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <group position={[0, 0, -0.3]}>
+        <group ref={rings}>
+          {[1.75, 2.1].map((r, i) => (
+            <group key={r} rotation={[0, 0, i * 2.2]}>
+              <mesh>
+                <torusGeometry args={[r, 0.008, 8, 160]} />
+                <meshBasicMaterial color={i ? "#8b6cff" : "#2dd4bf"} transparent opacity={0.5} />
+              </mesh>
+              <mesh position={[r, 0, 0]}>
+                <sphereGeometry args={[0.05, 12, 12]} />
+                <meshBasicMaterial color={i ? "#c4b5fd" : "#7ef0ca"} />
+              </mesh>
+            </group>
+          ))}
+        </group>
+      </group>
 
       <group ref={phoneRef}>
         {/* Main metal body */}

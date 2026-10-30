@@ -1,9 +1,9 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Sparkles } from "@react-three/drei";
-import { BackSide, FrontSide, MathUtils, PlaneGeometry } from "three";
-import type { BufferAttribute, Group, Texture } from "three";
+import { AdditiveBlending, BackSide, CanvasTexture, FrontSide, MathUtils, PlaneGeometry } from "three";
+import type { BufferAttribute, Group, Mesh, Texture } from "three";
 
 import { COVER_H, COVER_W, PAGE_H, PAGE_W } from "./bookTextures.ts";
 import type { BookTextures } from "./bookTextures.ts";
@@ -67,6 +67,22 @@ function Leaf({ index, width, height, front, back, progress, lag, zRight, zLeft 
   );
 }
 
+/** soft teal/violet glow under the book (same look as the other scenes' pedestals) */
+function makeGlow() {
+  const c = document.createElement("canvas");
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext("2d")!;
+  g.scale(1, 0.5);
+  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gr.addColorStop(0, "rgba(89,225,210,0.55)");
+  gr.addColorStop(0.55, "rgba(139,108,255,0.22)");
+  gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 256, 256);
+  return new CanvasTexture(c);
+}
+
 type BookProps = {
   textures: BookTextures;
   /** 0 = closed, 1..3 = spreads. */
@@ -81,6 +97,9 @@ export function Book3D({ textures, step }: BookProps) {
   stepRef.current = step;
   const start = useRef<number | null>(null);
   const size = useThree((state) => state.size);
+  const glow = useRef<Mesh>(null);
+  const glowTex = useMemo(makeGlow, []);
+  useEffect(() => () => glowTex.dispose(), [glowTex]);
 
   useFrame((state, delta) => {
     if (start.current === null) start.current = state.clock.elapsedTime;
@@ -99,7 +118,12 @@ export function Book3D({ textures, step }: BookProps) {
     // keep the whole book inside the view on any screen shape
     const aspect = size.width / size.height;
     const tan = Math.tan(MathUtils.degToRad(35 / 2));
-    const distance = Math.max((COVER_H + 0.7) / (2 * tan), (PAGE_W * 2 + 0.9) / (2 * tan * aspect));
+    // book screen ka ~80% hissa leti hai: upar/neeche buttons ke liye jagah, aur side panel ke liye bhi (badi screen par)
+    const wide = size.width > 900;
+    const distance = Math.max(
+      (COVER_H + 1.5) / (2 * tan),
+      (PAGE_W * 2 + (wide ? 3.2 : 0.9)) / (2 * tan * aspect),
+    );
     state.camera.position.set(0, 0, distance * 1.02);
     state.camera.lookAt(0, 0, 0);
 
@@ -119,6 +143,7 @@ export function Book3D({ textures, step }: BookProps) {
     }
 
     if (leftSide.current) leftSide.current.scale.x = Math.max(0.0001, open);
+    if (glow.current) glow.current.scale.x = (0.75 + 0.5 * open) * (0.6 + 0.4 * intro);
   });
 
   const paper = "#efe4cc";
@@ -131,6 +156,11 @@ export function Book3D({ textures, step }: BookProps) {
       <pointLight position={[4.5, -1, 3]} intensity={10} color="#a78bfa" />
 
       <Sparkles count={46} scale={[9, 6, 3]} size={3} speed={0.35} opacity={0.7} color="#59e1d2" />
+
+      <mesh ref={glow} rotation={[-Math.PI / 2, 0, 0]} position={[0, -COVER_H / 2 - 0.3, 0.2]}>
+        <planeGeometry args={[COVER_W * 2.6, 1.7]} />
+        <meshBasicMaterial map={glowTex} transparent blending={AdditiveBlending} depthWrite={false} opacity={0.9} />
+      </mesh>
 
       <group ref={root}>
         {/* right-hand stack */}

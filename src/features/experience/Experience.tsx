@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import { Database, FolderOpen, Gamepad2, Mail, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -30,9 +31,13 @@ const ZOOM_SPEED = 0.0012;
 type ExperienceProps = {
   activePanel: PanelName | null;
   onSelect: (panel: PanelName) => void;
+  /** page-scroll driven zoom (1..1.3). When given, the mouse wheel is left alone so the page can scroll. */
+  scrollZoom?: MutableRefObject<number>;
+  /** stop drawing the room (it is hidden behind the page) */
+  paused?: boolean;
 };
 
-export function Experience({ activePanel, onSelect }: ExperienceProps) {
+export function Experience({ activePanel, onSelect, scrollZoom, paused }: ExperienceProps) {
   const stage = useRef<HTMLDivElement>(null);
   const pointer = useRef<PointerState>({ x: 0, y: 0 });
   const zoomTarget = useRef(MIN_ZOOM);
@@ -54,7 +59,7 @@ export function Experience({ activePanel, onSelect }: ExperienceProps) {
 
     const onWheel = (event: WheelEvent) => {
       // let the open panel scroll normally
-      if ((event.target as HTMLElement | null)?.closest(".world-panel")) return;
+      if ((event.target as HTMLElement | null)?.closest(".world-panel, .about-book")) return;
 
       event.preventDefault();
       const next = zoomTarget.current - event.deltaY * ZOOM_SPEED;
@@ -72,6 +77,7 @@ export function Experience({ activePanel, onSelect }: ExperienceProps) {
 
       pointer.current.x += (tx - pointer.current.x) * 0.05;
       pointer.current.y += (ty - pointer.current.y) * 0.05;
+      if (scrollZoom) zoomTarget.current = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, scrollZoom.current));
       zoom += (zoomTarget.current - zoom) * 0.1;
 
       // when zoomed in, slide the view a little toward where the cursor is
@@ -89,7 +95,7 @@ export function Experience({ activePanel, onSelect }: ExperienceProps) {
     };
 
     window.addEventListener("pointermove", onMove);
-    window.addEventListener("wheel", onWheel, { passive: false });
+    if (!scrollZoom) window.addEventListener("wheel", onWheel, { passive: false });
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -101,8 +107,8 @@ export function Experience({ activePanel, onSelect }: ExperienceProps) {
 
   // opening a panel already zooms the room, so reset the scroll-zoom
   useEffect(() => {
-    if (activePanel) zoomTarget.current = MIN_ZOOM;
-  }, [activePanel]);
+    if (activePanel && !scrollZoom) zoomTarget.current = MIN_ZOOM;
+  }, [activePanel, scrollZoom]);
 
   const focus = activePanel && activePanel !== "play" ? hotspotById[activePanel] : null;
   const origin = focus ? focusOrigin(focus.x, focus.y) : { x: 50, y: 50 };
@@ -123,7 +129,7 @@ export function Experience({ activePanel, onSelect }: ExperienceProps) {
         }}
       >
         <div className="stage-zoom">
-          <DepthCanvas pointer={pointer} onReady={() => setLoaded(true)} />
+          <DepthCanvas pointer={pointer} onReady={() => setLoaded(true)} paused={paused} />
 
           <AmbientEffects />
           <CollectiblesGame />

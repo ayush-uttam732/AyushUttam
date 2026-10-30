@@ -13,7 +13,6 @@ import type { Texture } from "three";
 
 import roomUrl from "../../assets/room.jpg";
 import depthUrl from "../../assets/room-depth.jpg";
-
 import { STRENGTH_X, STRENGTH_Y, ZOOM } from "./Stage";
 
 export type PointerState = { x: number; y: number };
@@ -64,6 +63,7 @@ function useTexture(url: string, fallback: () => Texture): Texture | null {
       },
       undefined,
       () => {
+        console.error(`Image failed to load: ${url}`);
         if (alive) setTexture(fallback());
       },
     );
@@ -84,9 +84,9 @@ function flatTexture(r: number, g: number, b: number) {
 }
 
 function Plane({ pointer, onReady }: { pointer: MutableRefObject<PointerState>; onReady: () => void }) {
-const map = useTexture(roomUrl, () => flatTexture(12, 14, 24));
+  const map = useTexture(roomUrl, () => flatTexture(12, 14, 24));
   // no depth map? use flat grey -> the whole image just slides a little
-const depth = useTexture(depthUrl, () => flatTexture(128, 128, 128));
+  const depth = useTexture(depthUrl, () => flatTexture(128, 128, 128));
 
   const material = useMemo(
     () =>
@@ -130,13 +130,17 @@ const depth = useTexture(depthUrl, () => flatTexture(128, 128, 128));
 export function DepthCanvas({
   pointer,
   onReady,
+  paused = false,
 }: {
   pointer: MutableRefObject<PointerState>;
   onReady: () => void;
+  /** stop rendering (saves the GPU while the room is hidden behind other sections) */
+  paused?: boolean;
 }) {
   return (
     <Canvas
       className="depth-canvas"
+      frameloop={paused ? "never" : "always"}
       dpr={[1, 1.75]}
       flat
       gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}

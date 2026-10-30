@@ -3,8 +3,11 @@ import { Canvas } from "@react-three/fiber";
 import {
   ArrowLeft,
   ArrowUpRight,
+  Briefcase,
+  Clock,
   Github,
   Linkedin,
+  Mail,
   MessageCircle,
   RotateCcw,
   Send,
@@ -22,6 +25,18 @@ type ContactPhoneProps = {
 
 type View = "lock" | "card" | "chat";
 
+/** Badi screen par phone ke dono taraf dikhne wala text. Yahin se badal sakte ho. */
+const SIDE = {
+  kicker: "05 · LET'S TALK",
+  title: ["Have an idea?", "Let's build it."],
+  text: "Web products, 3D experiences or something in between. Tell me what you have in mind and I'll get back to you.",
+  status: "Available for new projects",
+  facts: [
+    { icon: Clock, label: "REPLY TIME", value: "Usually within a day" },
+    { icon: Briefcase, label: "OPEN TO", value: "Freelance & full-time" },
+  ],
+};
+
 type Message = {
   id: number;
   from: "me" | "him";
@@ -36,13 +51,35 @@ export function ContactPhone({ onClose }: ContactPhoneProps) {
   ]);
   const [now, setNow] = useState(() => new Date());
   const screenRef = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [embedded, setEmbedded] = useState(false);
+
+  /* scroll-chapter ke andar: phone tab jaagta hai jab scene poori screen par khul jaye */
+  useEffect(() => {
+    const host = root.current?.closest(".chapter") as HTMLElement | null;
+    if (!host) {
+      setOpen(true);
+      return;
+    }
+    setEmbedded(true);
+    const check = () => {
+      if (parseFloat(host.style.getPropertyValue("--e") || "0") >= 0.9) {
+        setOpen(true);
+        window.removeEventListener("scroll", check);
+      }
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, []);
 
   useEffect(() => {
-    if (view !== "lock") return;
+    if (view !== "lock" || !open) return;
 
     const timer = window.setTimeout(() => setView("card"), 2600);
     return () => window.clearTimeout(timer);
-  }, [view]);
+  }, [view, open]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 15000);
@@ -51,12 +88,12 @@ export function ContactPhone({ onClose }: ContactPhoneProps) {
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !embedded) onClose();
     };
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [embedded, onClose]);
 
   const sendMessage = () => {
     const text = draft.trim();
@@ -95,7 +132,13 @@ export function ContactPhone({ onClose }: ContactPhoneProps) {
   });
 
   return (
-    <div className="contact-phone-overlay" role="dialog" aria-modal="true" aria-label="Contact Ayush">
+    <div
+      ref={root}
+      className={`contact-phone-overlay ${embedded ? "is-embedded" : ""} ${open ? "is-open" : ""}`}
+      role={embedded ? "region" : "dialog"}
+      aria-modal={embedded ? undefined : true}
+      aria-label="Contact Ayush"
+    >
       {/* Transparent canvas: existing home scene stays visible behind it. */}
       <div className="contact-phone-canvas">
         <Canvas
@@ -106,6 +149,62 @@ export function ContactPhone({ onClose }: ContactPhoneProps) {
           <Phone3D awake screenRef={screenRef} />
         </Canvas>
       </div>
+
+      {/* badi screen par phone ke dono taraf text (sirf scroll-chapter me) */}
+      {embedded && (
+        <>
+          <aside className="contact-side contact-side-left">
+            <span className="side-kicker">{SIDE.kicker}</span>
+            <h3>
+              {SIDE.title.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </h3>
+            <p>{SIDE.text}</p>
+            <div className="side-status">
+              <span />
+              {SIDE.status}
+            </div>
+          </aside>
+
+          <aside className="contact-side contact-side-right" aria-label="Contact details">
+            <span className="side-kicker">REACH ME</span>
+            <a className="side-row" href={`mailto:${SOCIAL.email}`}>
+              <Mail size={18} />
+              <span>
+                <small>EMAIL</small>
+                <b>{SOCIAL.email}</b>
+              </span>
+              <ArrowUpRight size={15} />
+            </a>
+            <a className="side-row" href={whatsappLink("Hi Ayush!")} target="_blank" rel="noreferrer">
+              <MessageCircle size={18} />
+              <span>
+                <small>WHATSAPP</small>
+                <b>Message me directly</b>
+              </span>
+              <ArrowUpRight size={15} />
+            </a>
+            {SIDE.facts.map(({ icon: Icon, label, value }) => (
+              <div className="side-row is-static" key={label}>
+                <Icon size={18} />
+                <span>
+                  <small>{label}</small>
+                  <b>{value}</b>
+                </span>
+              </div>
+            ))}
+            <div className="side-social">
+              <a href={SOCIAL.github} target="_blank" rel="noreferrer" aria-label="GitHub">
+                <Github size={17} />
+              </a>
+              <a href={SOCIAL.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn">
+                <Linkedin size={17} />
+              </a>
+            </div>
+          </aside>
+        </>
+      )}
 
       {/* Screen: real HTML, pinned onto the 3D phone glass by Phone3D every frame. */}
       <div ref={screenRef} className={`contact-phone-screen view-${view}`}>

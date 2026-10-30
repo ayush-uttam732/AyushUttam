@@ -26,6 +26,7 @@ interface Shared {
   birth: number[]; // har skill kab absorb hui (clock seconds), -1 = abhi nahi
   mx: number;
   my: number;
+  startAt: number; // scene poori khulne par set hota hai (-1 = abhi nahi)
 }
 type SharedRef = { current: Shared };
 
@@ -206,15 +207,16 @@ const SkillIcon = memo(function SkillIcon({
   useFrame((state) => {
     const g = group.current;
     if (!g) return;
-    const t = state.clock.elapsedTime - (FIRST + index * GAP);
+    const s = shared.current;
     const bx = box.current;
+    // icons tab tak ruke rehte hain jab tak scroll se scene poori screen par na khul jaye
+    const t = s.startAt < 0 ? -1 : state.clock.elapsedTime - s.startAt - (FIRST - 0.8 + index * GAP);
     if (t < 0) {
       if (bx) bx.style.opacity = '0';
       trail.mat.uniforms.uOpacity.value = 0;
       return;
     }
 
-    const s = shared.current;
     const { start, slot, surfLocal } = LAYOUT[index];
     const { pos, ctrl, surf, slotW, p } = tmp;
 
@@ -330,6 +332,8 @@ export const BrainScene = memo(function BrainScene({
   reduced: boolean;
 }) {
   const size = useThree((s) => s.size);
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
   const compact = size.width < 820;
   const aspect = size.width / size.height;
   const fit = Math.min(1, aspect / 1.1);
@@ -457,6 +461,15 @@ export const BrainScene = memo(function BrainScene({
   );
 
   const brain = useRef<THREE.Group>(null);
+  const host = useRef<HTMLElement | null | undefined>(undefined);
+
+  // canvas transparent: koi solid background nahi, peeche website ka 3D world dikhega
+  useEffect(() => {
+    scene.background = null;
+    gl.setClearColor(0x000000, 0);
+    gl.setClearAlpha(0);
+  }, [gl, scene]);
+
   const shared = useRef<Shared>({
     absorbed: reduced ? N : 0,
     pulse: 0,
@@ -467,6 +480,7 @@ export const BrainScene = memo(function BrainScene({
     birth: SKILLS.map(() => -1),
     mx: 0,
     my: 0,
+    startAt: reduced ? 0 : -1,
   });
 
   useEffect(() => {
@@ -499,6 +513,13 @@ export const BrainScene = memo(function BrainScene({
     const s = shared.current;
     const t = state.clock.elapsedTime;
     const { brainMat, dotMat, lineGeo, nodes, core } = gfx;
+
+    // scroll-chapter ke andar ho to icons tab shuru ho jab scene poori screen par khul chuka ho
+    if (s.startAt < 0) {
+      if (host.current === undefined) host.current = state.gl.domElement.closest('.chapter') as HTMLElement | null;
+      const open = host.current ? parseFloat(host.current.style.getPropertyValue('--e') || '0') >= 0.9 : true;
+      if (open) s.startAt = t;
+    }
 
     // camera: dheere se andar aata hai + halka mouse parallax
     const cam = state.camera;
@@ -557,7 +578,7 @@ export const BrainScene = memo(function BrainScene({
   });
 
   // Icons aur brain ek hi parent group me hain, isliye offset/scale dono par barabar lagta hai.
-  const offset: [number, number, number] = compact ? [0, 0.5, 0] : [0.7, 0, 0];
+  const offset: [number, number, number] = compact ? [0, 0.25, 0] : [0, 0, 0];
 
   return (
     <group position={offset} scale={fit}>

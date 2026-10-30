@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import type { Project } from '../../../types';
 import {
   accentOf,
+  CARD_SCALE,
   CARD_SIZES,
   drawCards,
   drawScreen,
@@ -20,6 +21,10 @@ const BASEH = 0.12;
 /** Timeline (seconds): booting, unlocking, screen online, loading, ready */
 const STAGE_AT = [0.1, 1.9, 3.1, 3.9, 5.3];
 const FLY = 1.7;
+/** camera ka field of view (hum khud set karte hain taaki laptop ka size viewport se tay ho) */
+const FOV = 36;
+/** laptop is time tak aata hai, uske baad lid scene khulne par hi khulta hai */
+const OPEN_AT = 1.9;
 
 const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
 const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
@@ -39,7 +44,7 @@ function makeCanvas(w: number, h: number) {
   cv.height = h;
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
+  tex.anisotropy = 16;
   return { cv, tex };
 }
 
@@ -120,8 +125,9 @@ interface Props {
 
 export const LaptopScene = memo(function LaptopScene({ projects, active, reduced, onStage, ready, onPrev, onNext }: Props) {
   const size = useThree((s) => s.size);
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
   const compact = size.width < 820;
-  const fit = Math.min(1, size.width / size.height / 1.15);
 
   const root = useRef<THREE.Group>(null);
   const lid = useRef<THREE.Group>(null);
@@ -132,10 +138,20 @@ export const LaptopScene = memo(function LaptopScene({ projects, active, reduced
   const stageRef = useRef(-1);
   const swap = useRef({ t: 1, flick: 0 });
   const mouse = useRef({ x: 0, y: 0 });
+  const host = useRef<HTMLElement | null | undefined>(undefined);
+  const startAt = useRef(-1);
+  const startBase = useRef(0);
+
+  // canvas transparent: peeche website ka 3D background dikhe
+  useEffect(() => {
+    scene.background = null;
+    gl.setClearColor(0x000000, 0);
+    gl.setClearAlpha(0);
+  }, [gl, scene]);
 
   const gfx = useMemo(() => {
     const screen = makeCanvas(SCREEN_W, SCREEN_H);
-    const cards = CARD_SIZES.map(([w, h]) => makeCanvas(w, h));
+    const cards = CARD_SIZES.map(([w, h]) => makeCanvas(w * CARD_SCALE, h * CARD_SCALE));
     const screenMat = new THREE.MeshBasicMaterial({ map: screen.tex, toneMapped: false });
     const cardMats = cards.map(
       (c) => new THREE.MeshBasicMaterial({ map: c.tex, transparent: true, toneMapped: false, depthWrite: false }),
@@ -235,8 +251,19 @@ export const LaptopScene = memo(function LaptopScene({ projects, active, reduced
   const accent = accentOf(active);
 
   useFrame((state, dt) => {
-    const t = reduced ? 99 : state.clock.elapsedTime;
     const lt = state.clock.elapsedTime;
+
+    // scroll-chapter ke andar: laptop aa jata hai, lekin lid / screen tab chalu hote hain jab scene poori screen par khul jaye
+    if (host.current === undefined) host.current = state.gl.domElement.closest('.chapter') as HTMLElement | null;
+    let t = lt;
+    if (reduced) t = 99;
+    else if (host.current) {
+      if (startAt.current < 0 && parseFloat(host.current.style.getPropertyValue('--e') || '0') >= 0.9) {
+        startAt.current = lt;
+        startBase.current = Math.min(lt, OPEN_AT);
+      }
+      t = startAt.current >= 0 ? startBase.current + (lt - startAt.current) : Math.min(lt, OPEN_AT);
+    }
 
     while (stageRef.current < 4 && t > STAGE_AT[stageRef.current + 1]) {
       stageRef.current += 1;
@@ -265,9 +292,17 @@ export const LaptopScene = memo(function LaptopScene({ projects, active, reduced
     if (lid.current) lid.current.rotation.x = A_OPEN * clamp(open, 0, 1.08);
 
     // camera: upar se dekhta hua band laptop -> seedha screen par
-    const cam = state.camera;
-    const baseZ = compact ? 11 : 8.4;
-    cam.position.set(0, 3.4 - 1.7 * settle, baseZ * (1.08 - 0.08 * settle));
+    const cam = state.camera as THREE.PerspectiveCamera;
+    if (cam.fov !== FOV) {
+      cam.fov = FOV;
+      cam.updateProjectionMatrix();
+    }
+    // camera ki doori viewport se tay hoti hai: badi screen par laptop bada, chhoti/patli par poora fit
+    const aspect = state.size.width / Math.max(1, state.size.height);
+    const visH = Math.max(compact ? 4.4 : 3.9, (compact ? 5.6 : 7.4) / aspect);
+    const dist = (visH / 2 / Math.tan((FOV * Math.PI) / 360)) * (1.08 - 0.08 * settle);
+    const camY = 3.4 - 1.7 * settle;
+    cam.position.set(0, camY, Math.sqrt(Math.max(1, dist * dist - camY * camY)));
     cam.lookAt(0, 0, 0);
 
     // screen on + project badalne par halka flicker
@@ -297,7 +332,7 @@ export const LaptopScene = memo(function LaptopScene({ projects, active, reduced
     if (glowRef.current) (glowRef.current.material as THREE.MeshBasicMaterial).opacity = fly;
   });
 
-  const offset: [number, number, number] = compact ? [0, -0.4, 0] : [-0.3, -1.1, 0];
+  const offset: [number, number, number] = compact ? [0, -0.4, 0] : [0, -1.1, 0];
 
   return (
     <>
@@ -306,7 +341,7 @@ export const LaptopScene = memo(function LaptopScene({ projects, active, reduced
       <pointLight position={[-4, 2, -2]} color="#2dd4bf" intensity={40} distance={14} decay={2} />
       <pointLight ref={keyLight} position={[0, 1.6, 2.4]} color={accent} intensity={0} distance={9} decay={2} />
 
-      <group position={offset} scale={fit}>
+      <group position={offset}>
         {/* pedestal */}
         <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.32, 0]}>
           <planeGeometry args={[7, 7]} />

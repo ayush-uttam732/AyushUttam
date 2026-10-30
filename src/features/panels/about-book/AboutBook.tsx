@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ArrowLeft, ArrowRight, Check, RotateCcw, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, Check, RotateCcw, X } from "lucide-react";
 
 import { about } from "../../../data/about";
 import { Book3D } from "./Book3D";
@@ -64,6 +64,28 @@ export function AboutBook({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
   const [auto, setAuto] = useState(true);
   const [run, setRun] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [embedded, setEmbedded] = useState(false);
+
+  /* scroll-chapter ke andar: kitaab tab palatna shuru kare jab scene poori screen par khul jaye */
+  useEffect(() => {
+    const host = root.current?.closest(".chapter") as HTMLElement | null;
+    if (!host) {
+      setOpen(true);
+      return;
+    }
+    setEmbedded(true);
+    const check = () => {
+      if (parseFloat(host.style.getPropertyValue("--e") || "0") >= 0.9) {
+        setOpen(true);
+        window.removeEventListener("scroll", check);
+      }
+    };
+    check();
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, []);
 
   /* draw the pages once fonts + photo are ready */
   useEffect(() => {
@@ -94,13 +116,13 @@ export function AboutBook({ onClose }: { onClose: () => void }) {
 
   /* autoplay: cover -> chapter 1 -> 2 -> 3 */
   useEffect(() => {
-    if (!textures || !auto || step >= LAST_STEP) return;
+    if (!textures || !open || !auto || step >= LAST_STEP) return;
     const id = window.setTimeout(
       () => setStep((value) => Math.min(LAST_STEP, value + 1)),
       step === 0 ? FIRST_DELAY : PAGE_DELAY,
     );
     return () => window.clearTimeout(id);
-  }, [textures, auto, step, run]);
+  }, [textures, open, auto, step, run]);
 
   const goTo = useCallback((next: number) => {
     setAuto(false);
@@ -115,19 +137,25 @@ export function AboutBook({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !embedded) onClose();
       if (event.key === "ArrowRight") goTo(step + 1);
       if (event.key === "ArrowLeft") goTo(step - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goTo, onClose, step]);
+  }, [embedded, goTo, onClose, step]);
 
   const logLines = useMemo(() => about.status.slice(0, step + 1), [step]);
   const done = step === LAST_STEP;
 
   return (
-    <div className="about-book" role="dialog" aria-modal="true" aria-label="About me">
+    <div
+      ref={root}
+      className={`about-book ${embedded ? "is-embedded" : ""}`}
+      role={embedded ? "region" : "dialog"}
+      aria-modal={embedded ? undefined : true}
+      aria-label="About me"
+    >
       <div className="about-book-stage">
         {textures && (
           <Canvas
@@ -193,7 +221,7 @@ export function AboutBook({ onClose }: { onClose: () => void }) {
             <RotateCcw size={14} /> REPLAY
           </button>
           <button onClick={onClose}>
-            <X size={14} /> CLOSE
+            {embedded ? <ArrowDown size={14} /> : <X size={14} />} {embedded ? "CONTINUE" : "CLOSE"}
           </button>
         </div>
       </footer>
