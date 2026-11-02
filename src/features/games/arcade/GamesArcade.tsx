@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { ArrowLeft, Bug, Gamepad2, Layers, RotateCcw, Rocket, Trophy, X } from "lucide-react";
 
@@ -72,9 +72,19 @@ type Props = {
   onClose: () => void;
   /** starts the hidden-orb hunt in the room (closes the arcade) */
   onStartHunt: () => void;
+  /** true when rendered inside a 3D chapter window (not a fixed full-screen overlay) */
+  embedded?: boolean;
 };
 
-export function GamesArcade({ onClose, onStartHunt }: Props) {
+export function GamesArcade({ onClose, onStartHunt, embedded: embeddedProp }: Props) {
+  // auto-detects the 3D chapter window, so App.tsx needs no change
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [inChapter, setInChapter] = useState(false);
+  useLayoutEffect(() => {
+    setInChapter(!!rootRef.current?.closest(".scene-embed"));
+  }, []);
+  const embedded = embeddedProp ?? inChapter;
+
   const [current, setCurrent] = useState<GameId | null>(null);
   const [run, setRun] = useState(0);
   const [score, setScore] = useState(0);
@@ -119,16 +129,27 @@ export function GamesArcade({ onClose, onStartHunt }: Props) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       if (currentRef.current) toMenu();
-      else onClose();
+      // embedded: Esc never scrolls the page away, only leaves a running game
+      else if (!embedded) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, embedded]);
 
   const entry = games.find((game) => game.id === current);
 
+  const classes = ["arcade", embedded ? "arcade--embedded" : "", !entry ? "arcade--menu" : ""]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="arcade" role="dialog" aria-modal="true" aria-label="Mini games">
+    <div
+      ref={rootRef}
+      className={classes}
+      role={embedded ? "region" : "dialog"}
+      aria-modal={embedded ? undefined : true}
+      aria-label="Mini games"
+    >
       {!entry && (
         <div className="arcade-menu">
           <div className="arcade-title">
@@ -147,8 +168,13 @@ export function GamesArcade({ onClose, onStartHunt }: Props) {
                 onClick={() => start(game.id)}
                 onPointerMove={(event) => {
                   const r = event.currentTarget.getBoundingClientRect();
-                  event.currentTarget.style.setProperty("--rx", `${((event.clientY - r.top) / r.height - 0.5) * -12}deg`);
-                  event.currentTarget.style.setProperty("--ry", `${((event.clientX - r.left) / r.width - 0.5) * 14}deg`);
+                  const nx = (event.clientX - r.left) / r.width;
+                  const ny = (event.clientY - r.top) / r.height;
+                  const s = event.currentTarget.style;
+                  s.setProperty("--rx", `${(ny - 0.5) * -12}deg`);
+                  s.setProperty("--ry", `${(nx - 0.5) * 14}deg`);
+                  s.setProperty("--mx", `${nx * 100}%`);
+                  s.setProperty("--my", `${ny * 100}%`);
                 }}
                 onPointerLeave={(event) => {
                   event.currentTarget.style.setProperty("--rx", "0deg");
@@ -170,7 +196,8 @@ export function GamesArcade({ onClose, onStartHunt }: Props) {
           <button
             className="arcade-hunt"
             onClick={() => {
-              onClose();
+              // embedded: don't scroll to the next chapter, just start the hunt (it scrolls to the room)
+              if (!embedded) onClose();
               onStartHunt();
             }}
           >
@@ -227,9 +254,12 @@ export function GamesArcade({ onClose, onStartHunt }: Props) {
         </>
       )}
 
-      <button className="arcade-close" onClick={onClose} aria-label="Close games">
-        <X size={19} />
-      </button>
+      {/* in the 3D chapter the page scroll is the exit (the close button is hidden there) */}
+      {!embedded && (
+        <button className="arcade-close" onClick={onClose} aria-label="Close games">
+          <X size={19} />
+        </button>
+      )}
     </div>
   );
 }
